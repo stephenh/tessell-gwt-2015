@@ -179,7 +179,7 @@ model.addChangeHandler(e -> textBox.setValue(model.getName()));
   <p class="fragment">Think declaratively</p>
   <pre class="fragment"><code data-trim class="java">
 public void onBind() {
-  binder.bind(model.name).to(textBox);
+  binder.bind(model.name).to(view.textBox());
 }
   </code></pre></li>
 
@@ -254,29 +254,29 @@ ChildDto:
   properties: id, name
   tessellModel: true
   </code></pre></li>
+  <p class="fragment">Outputs:</p>
+  <pre class="fragment"><code data-trim class="java">
+ChildDto dto = new ChildDto(1, "c1");
+ChildModel model = new ChildModel(dto);
+model.name.get(); // returns c1
+  </code></pre></li>
 </section>
 
 <section>
   <h2>Reactive</h2>
   <p class="fragment">Derived values</p>
   <pre class="fragment"><code data-trim class="java">
-StringProperty name = stringProperty("name");
-IntegerProperty max = integerProperty("max");
-Property<String> shortName = new DerivedProperty<String>() {
+StringProperty name = stringProperty("name", "n1");
+IntegerProperty max = integerProperty("max", 10);
+Property&lt;String&gt; shortName = new DerivedProperty&lt;String&gt;() {
   public String getDerivedValue() {
     return name.get().substring(0, max.get());
   }
 }
 binder.bind(shortName).to(view.shortName());
   </code></pre></li>
-</section>
-
-<section>
-  <h2>Reactive</h2>
-  <p class="fragment">With lambdas</p>
+  <p class="fragment">And soon:</p>
   <pre class="fragment"><code data-trim class="java">
-StringProperty name = stringProperty("name");
-IntegerProperty max = integerProperty("max");
 binder.bind(() -> {
   name.get().substring(0, max.get())
 }).to(view.shortName());
@@ -289,10 +289,52 @@ binder.bind(() -> {
 </section>
 
 <section>
+  <h2>Minimal Places</h2>
+  <pre class="fragment"><code data-trim class="java">
+public class MyPresenter {
+  @GenPlace(name = "myPlace", async = false)
+  public static void onRequest(MyPlaceRequest req, AppContext c) {
+    c.show(new MyPresenter(...));
+  }
+  </code></pre></li>
+</section>
+
+<section>
+  <h2>Command Pattern Code Generation</h2>
+  <pre class="fragment"><code data-trim class="java">
+@GenDispatch
+public class SaveClientSpec {
+  @In(1)
+  ClientDto dto;
+  @Out(1)
+  String error;
+}
+  </code></pre></li>
+  <p class="fragment">Generates:</p>
+  <pre class="fragment"><code data-trim class="java">
+async.execute(new SaveClientAction(dto), SaveClientResult r -> {
+  r.getError(); // logic
+});
+  </code></pre></li>
+</section>
+
+<section>
+  <h2>Interfaces and Stubs for widgets</h2>
+  <p class="fragment">
+    Out of the box:
+    <ul class="fragment">
+      <li>IsTextBox, StubTextBox</li>
+      <li>IsListBox, StubListBox</li>
+      <li>IsFlowPanel, StubFlowPanel</li>
+    </ul>
+  </p>
+</section>
+
+<section>
   <h2>Tessell Overview: Benefits</h2>
   <ol>
     <li class="fragment">Mature, stable code (4+ years, 6800 commits, 361 releases)</li>
-    <li class="fragment">All core functionality (data binding, etc.) is Java, so presenters can be unit tested</li>
+    <li class="fragment">All core functionality (data binding, etc.) is Java, so presenters can be unit tested and it will exercise all binding/etc. logic</li>
     <li class="fragment">
       First-class support for common idioms
       <ul>
@@ -306,7 +348,6 @@ binder.bind(() -> {
 <section>
   <h2>Tessell Overview: Weaknesses</h2>
   <ol>
-    <li class="fragment">No community</li>
     <li class="fragment">
       No bootstrap/archetype to get started
       <ul>
